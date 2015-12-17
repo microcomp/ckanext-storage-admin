@@ -147,25 +147,27 @@ def _triple_count_per_org(context, reply):
         org_name = o['name']
         if org_name not in list_of_orgs_by_names:
             list_of_orgs_by_names[org_name] = o
-
-    cnxn = pyodbc.connect(VIRTUOSO_DSN)
-    for graph_iri in _get_graph_list():
-        cursor = cnxn.cursor()
-        cursor.execute(graph_owners, (graph_iri, ))
-        row = cursor.fetchone()
-
-        if row is not None:
-            log.debug('graph_iri = {0}, user_id = {1}, user_name = {2}'.format(graph_iri, row[0], row[1]))
-
-            user_name = row[1]
-            if user_name in list_of_orgs_by_names:
-                org_id = list_of_orgs_by_names[user_name]['id']
-                graph_size = _get_graph_triple_count(graph_iri)
-                if org_id not in reply:
-                    reply[org_id] = _get_empty()
-                reply[org_id]['triplestore'] += long(graph_size)
-
-        cursor.close()
+    try:
+        cnxn = pyodbc.connect(VIRTUOSO_DSN)
+        for graph_iri in _get_graph_list():
+            cursor = cnxn.cursor()
+            cursor.execute(graph_owners, (graph_iri, ))
+            row = cursor.fetchone()
+    
+            if row is not None:
+                log.debug('graph_iri = {0}, user_id = {1}, user_name = {2}'.format(graph_iri, row[0], row[1]))
+    
+                user_name = row[1]
+                if user_name in list_of_orgs_by_names:
+                    org_id = list_of_orgs_by_names[user_name]['id']
+                    graph_size = _get_graph_triple_count(graph_iri)
+                    if org_id not in reply:
+                        reply[org_id] = _get_empty()
+                    reply[org_id]['triplestore'] += long(graph_size)
+    
+            cursor.close()
+    except pyodbc.DatabaseError, err:
+        log.exception(err)
     return
 
 

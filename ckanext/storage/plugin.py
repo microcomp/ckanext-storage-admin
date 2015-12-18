@@ -229,8 +229,11 @@ def _get_empty():
 
 def _file_size(resource):
     upload = uploader.ResourceUpload(resource)
-    return os.path.getsize(upload.get_path(resource['id']))
-
+    try:
+        return os.path.getsize(upload.get_path(resource['id']))
+    except OSError, e:
+        log.exception(e)
+        return 0L
 
 class StorageAdminPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IActions)

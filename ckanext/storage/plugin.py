@@ -194,10 +194,11 @@ def _database_space_per_org(context, reply):
     # map tables/resources to org ids
     resource_to_org = _resource_to_org_mapping(context)
     for (resource_id, size) in results:
-        org_id = resource_to_org[resource_id]
-        if org_id not in reply:
-            reply[org_id] = _get_empty()
-        reply[org_id]['database'] += long(size)
+        org_id = resource_to_org.get(resource_id)
+        if org_id:
+            if org_id not in reply:
+                reply[org_id] = _get_empty()
+            reply[org_id]['database'] += long(size)
 
 
 def _resource_to_org_mapping(context):

@@ -7,6 +7,7 @@ import ckan.lib.uploader as uploader
 import ckanext.datastore.db as db
 import logging
 import pypyodbc as pyodbc
+import socket
 
 from ckan.lib.base import h
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -83,42 +84,51 @@ def used_space_per_org(context, data_dict=None):
 
 
 def _triple_count_total():
-    sparql = SPARQLWrapper(SPARQL_ENDPOINT)
-    sparql.setQuery("""
-        SELECT count(*) AS ?count
-        WHERE { ?s ?p ?o . }
-    """)
-
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    for result in results["results"]["bindings"]:
-        return long(result["count"]["value"])
+    try:
+        sparql = SPARQLWrapper(SPARQL_ENDPOINT)
+        sparql.setQuery("""
+            SELECT count(*) AS ?count
+            WHERE { ?s ?p ?o . }
+        """)
+    
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+    
+        for result in results["results"]["bindings"]:
+            return long(result["count"]["value"])
+    except socket.timeout, e:
+        log.exception(e)
 
 
 def _get_graph_list():
-    sparql = SPARQLWrapper(SPARQL_ENDPOINT)
-    sparql.setQuery("""
-        SELECT DISTINCT ?g
-        WHERE { GRAPH ?g { ?s ?p ?o . }}
-    """)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    return [str(result['g']['value']) for result in results['results']['bindings']]
+    try:
+        sparql = SPARQLWrapper(SPARQL_ENDPOINT)
+        sparql.setQuery("""
+            SELECT DISTINCT ?g
+            WHERE { GRAPH ?g { ?s ?p ?o . }}
+        """)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+    
+        return [str(result['g']['value']) for result in results['results']['bindings']]
+    except socket.timeout, e:
+        log.exception(e)
 
 
 def _get_graph_triple_count(graph_iri):
-    sparql = SPARQLWrapper(SPARQL_ENDPOINT)
-    sparql.setQuery("""
-        SELECT COUNT(*)
-        WHERE { ?s ?p ?o . }
-    """)
-    sparql.addDefaultGraph(graph_iri)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-
-    return long(results['results']['bindings'][0]['callret-0']['value'])
+    try:
+        sparql = SPARQLWrapper(SPARQL_ENDPOINT)
+        sparql.setQuery("""
+            SELECT COUNT(*)
+            WHERE { ?s ?p ?o . }
+        """)
+        sparql.addDefaultGraph(graph_iri)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+    
+        return long(results['results']['bindings'][0]['callret-0']['value'])
+    except socket.timeout, e:
+        log.exception(e)
 
 
 def _triple_count_per_org(context, reply):

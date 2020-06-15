@@ -8,6 +8,7 @@ import ckanext.datastore.db as db
 import logging
 import pypyodbc as pyodbc
 import socket
+import urllib2
 
 from ckan.lib.base import h
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -99,6 +100,10 @@ def _triple_count_total():
     except socket.timeout, e:
         log.exception(e)
 
+    except urllib2.URLError, err:
+        log.exception(err)
+        return 0L
+
 
 def _get_graph_list():
     try:
@@ -129,6 +134,7 @@ def _get_graph_triple_count(graph_iri):
         return long(results['results']['bindings'][0]['callret-0']['value'])
     except socket.timeout, e:
         log.exception(e)
+
 
 
 def _triple_count_per_org(context, reply):
@@ -178,6 +184,9 @@ def _triple_count_per_org(context, reply):
             cursor.close()
     except pyodbc.DatabaseError, err:
         log.exception(err)
+    except urllib2.URLError, err:
+        log.exception(err)
+
     return
 
 
